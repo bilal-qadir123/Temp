@@ -1,0 +1,4 @@
+b@123,Distress (High)
+b@12345,Eustress (Moderate level)
+b@1234567,Distress (High)
+b@12345,No Stress (0 or very low)
