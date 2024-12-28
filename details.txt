@@ -1,0 +1,2 @@
+Email=b@123, gender=Male, age=21, stress=Not-at-all, rapid_heartbeat=Rarely, anxiety_tension=Moderate
+Email=b@123, gender=Male, age=21, stress=Not-at-all, rapid_heartbeat=Sometimes, anxiety_tension=Mild, sleep_issues=Rarely, frequent_headaches=Never

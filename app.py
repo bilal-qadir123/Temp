@@ -117,75 +117,90 @@ def index():
         else:
             prediction_text = "Predicted Stress Type: Distress (High)" 
 
-        return redirect(url_for('result', prediction=prediction_text)) 
+        # Collect user input details
+        user_details = {key: request.form[key] for key in request.form}
+
+        # Redirect to the result page with prediction and user details
+        return redirect(
+            url_for('result', prediction=prediction_text, **user_details)
+        )
 
     return render_template('index.html', email=email)
 
+
 # Route for displaying prediction result
 @app.route('/result')
-def result(): 
-    email = session.get('email') 
+def result():
+    email = session.get('email')
     prediction = request.args.get('prediction', 'No Prediction Available')
 
-    # Slice the prediction string from the 4th index onwards
-    prediction_type = prediction[23:]  # This removes the first 4 characters ("Pred")
+    # Extract user details from request args
+    user_details = {key: request.args.get(key) for key in request.args if key != 'prediction'}
+    user_details_str = ", ".join([f"{key}={value}" for key, value in user_details.items()])
 
-    # Read the predictions.txt file to check if the email already exists
-    found = False
+    # Read existing data from predictions.txt
+    updated = False
+    new_lines = []
     with open('predictions.txt', 'r') as file:
         lines = file.readlines()
-        for i, line in enumerate(lines):
-            stored_email, _ = line.strip().split(',')
+        for line in lines:
+            stored_email = line.split(',')[0].strip()
             if stored_email == email:
-                # If the email is found, overwrite the prediction (after the email)
-                lines[i] = f"{email},{prediction_type}\n"
-                found = True
-                break
-    
-    # If email not found, add the email and the prediction type
-    if not found:
-        lines.append(f"{email},{prediction_type}\n")
+                # Overwrite the line if email matches
+                new_lines.append(f"{email}, {prediction}, {user_details_str}\n")
+                updated = True
+            else:
+                new_lines.append(line)
 
-    # Write the updated predictions back to the file
+    # If no matching email, append a new line
+    if not updated:
+        new_lines.append(f"{email}, {prediction}, {user_details_str}\n")
+
+    # Write back the updated data to predictions.txt
     with open('predictions.txt', 'w') as file:
-        file.writelines(lines)
+        file.writelines(new_lines)
 
-    return render_template('result.html', prediction=prediction, email=email)
+    # Print details to the terminal for debugging
+    print(f"Stored Data: Email={email}, Prediction={prediction}, Details={user_details_str}")
+
+    return render_template('result.html', prediction=prediction, email=email, user_details=user_details)
+
+
 
 @app.route('/admin', methods=['GET'])
 def admin():
-    email = "admin@123"  # Get the email from the session
+    email = "admin@123"  # Admin's email (hardcoded for this example)
     
-    emails = []
-    predictions = []
-    
+    # Prepare lists to store data
+    email_prediction_details = []
+
     with open('predictions.txt', 'r') as file:
         for line in file:
-            email_data, prediction = line.strip().split(',')
-            emails.append(email_data)
-            predictions.append(prediction)
-
-    # Extract numbers from emails and prepare tuples
-    email_prediction_pairs = []
-    for email_data, prediction in zip(emails, predictions):
-        numbers_from_email = ''.join(re.findall(r'\d+', email_data))  # Extract numbers from email
-        email_prediction_pairs.append((numbers_from_email, email_data, prediction))
+            # Split the line into email, prediction, and details
+            parts = line.strip().split(', ', 2)
+            if len(parts) == 3:
+                email_data, prediction, details = parts
+                email_prediction_details.append((email_data, prediction, details))
+            else:
+                email_data, prediction = parts
+                email_prediction_details.append((email_data, prediction, "No additional details"))
 
     # Calculate the counts
-    total_students = len(email_prediction_pairs)
-    eustress_count = predictions.count('Eustress (Moderate level)')
-    no_stress_count = predictions.count('No Stress (0 or very low)')
-    distress_count = predictions.count('Distress (High)')
+    total_students = len(email_prediction_details)
+    eustress_count = sum(1 for _, prediction, _ in email_prediction_details if "Eustress" in prediction)
+    no_stress_count = sum(1 for _, prediction, _ in email_prediction_details if "No Stress" in prediction)
+    distress_count = sum(1 for _, prediction, _ in email_prediction_details if "Distress" in prediction)
 
     return render_template(
         'admin.html',
-        email_prediction_pairs=email_prediction_pairs,
+        email_prediction_details=email_prediction_details,
         account=email,
         total_students=total_students,
         eustress_count=eustress_count,
         no_stress_count=no_stress_count,
         distress_count=distress_count
     )
+
 
 
 

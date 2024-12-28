@@ -1,4 +1,4 @@
-b@123,Distress (High)
-b@12345,Eustress (Moderate level)
-b@1234567,Distress (High)
-b@12345,No Stress (0 or very low)
+b@12345, Predicted Stress Type: No Stress (0 or very low), gender=Male, age=21, stress=Moderate
+1@123, Predicted Stress Type: No Stress (0 or very low), gender=Male, age=21, stress=Moderate
+1@1, Predicted Stress Type: No Stress (0 or very low), gender=Male, age=21, stress=Mild
+1@1234567, Predicted Stress Type: No Stress (0 or very low), gender=Male, age=21, stress=Moderate
