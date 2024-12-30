@@ -170,20 +170,38 @@ def result():
 @app.route('/admin', methods=['GET'])
 def admin():
     email = "admin@123"  # Admin's email (hardcoded for this example)
-    
+
     # Prepare lists to store data
     email_prediction_details = []
+    email_set = set()  # To track emails that we've already processed
 
     with open('predictions.txt', 'r') as file:
         for line in file:
+            line = line.strip()
+
             # Split the line into email, prediction, and details
-            parts = line.strip().split(', ', 2)
+            parts = line.split(', ', 2)  # Split into exactly 3 parts: email, prediction, and details
+
+            # Check if the line has all three parts (email, prediction, details)
             if len(parts) == 3:
                 email_data, prediction, details = parts
+                prediction = prediction[22:]  # Remove the first 22 characters of the prediction
+            else:
+                print(f"Skipping malformed line: {line}")  # Debugging: log malformed lines
+                continue
+
+            # Check if this email has been processed before
+            if email_data not in email_set:
+                email_set.add(email_data)
                 email_prediction_details.append((email_data, prediction, details))
             else:
-                email_data, prediction = parts
-                email_prediction_details.append((email_data, prediction, "No additional details"))
+                print(f"Duplicate email found and skipped: {email_data}")  # Debugging: log duplicate emails
+                continue
+
+    # Debugging: Verify data read and print
+    print("\nProcessed Email Prediction Details:")
+    for detail in email_prediction_details:
+        print(f"Email: {detail[0]}\nPrediction: {detail[1]}\nDetails: {detail[2]}\n{'-'*50}")
 
     # Calculate the counts
     total_students = len(email_prediction_details)
@@ -191,6 +209,7 @@ def admin():
     no_stress_count = sum(1 for _, prediction, _ in email_prediction_details if "No Stress" in prediction)
     distress_count = sum(1 for _, prediction, _ in email_prediction_details if "Distress" in prediction)
 
+    # Render the admin page with the correct details
     return render_template(
         'admin.html',
         email_prediction_details=email_prediction_details,
@@ -200,9 +219,6 @@ def admin():
         no_stress_count=no_stress_count,
         distress_count=distress_count
     )
-
-
-
 
 if __name__ == '__main__':
     app.run(debug=True)
